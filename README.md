@@ -21,6 +21,40 @@ Measured on the last 30 videos.
 A handle or a channel ID both work: `@veritasium` and `UCXuqSBlHAE6Xw-yeJA0Tunw` are equally
 valid arguments.
 
+## The web version
+
+![The scorecard comparing two channels](docs/screenshot.png)
+
+One file, `docs/index.html`. No server, no build step, no dependencies. It makes the same three
+API calls the Python script does and works out the same numbers, then shows two creators side by
+side.
+
+Run it locally:
+
+```bash
+cd docs
+python3 -m http.server 8000     # then open http://localhost:8000
+```
+
+It needs a key. Paste one into the field on the page and it is remembered in your browser only,
+or put one in `docs/config.js` to skip the field entirely. Read the next section before doing
+that on a public site.
+
+### The key in a browser page
+
+Anything a browser page holds, a visitor can read, so a key shipped in a page is a key given
+away. The fix is not to hide it but to restrict it. In the Google Cloud console:
+
+- **Application restrictions**, Websites, add the site that is allowed to use it.
+- **API restrictions**, Restrict key, YouTube Data API v3 only.
+
+A copied key then does nothing from anywhere else, which is why a restricted key can sit in a
+public page.
+
+It is a limit, not a lock. Referrers can be forged, so the honest ceiling is that a determined
+person could spend the free daily quota. For anything with a bill attached, the key belongs on a
+server the browser never sees.
+
 ## What the numbers mean
 
 | Number | How it is worked out | Why a brand cares |

@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creator Scorecard</title>
+<meta name="description" content="Score a YouTube creator the way a brand would. Live from the YouTube Data API.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ground: #f6f8f6;
+    --surface: #ffffff;
+    --sunk: #eef2ee;
+    --ink: #15211d;
+    --muted: #59685f;
+    --faint: #8b9a91;
+    --rule: #d8e0da;
+    --rule-strong: #b9c5bd;
+    --accent: #0e6b57;
+    --accent-soft: #e0efe9;
+    --flag: #a8481b;
+    --flag-soft: #f7e8de;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #101614;
+      --surface: #18201d;
+      --sunk: #1d2622;
+      --ink: #e6ede8;
+      --muted: #98a79e;
+      --faint: #6e7d74;
+      --rule: #2a342f;
+      --rule-strong: #3d4a43;
+      --accent: #58c4a6;
+      --accent-soft: #1a2f28;
+      --flag: #e39066;
+      --flag-soft: #2e211a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  /* Must beat the display rules below, or hidden elements still show. */
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; }
+
+  .wrap { max-width: 56rem; margin: 0 auto; padding: 3rem 1.25rem 5rem; }
+
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 1.5rem; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.05; margin: 0.6rem 0 0.7rem;
+  }
+  .lede { margin: 0; max-width: 48ch; color: var(--muted); }
+
+  /* ---- form ---- */
+  form { margin: 2rem 0 0; display: flex; flex-direction: column; gap: 0.85rem; }
+  .row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+  .field { flex: 1 1 13rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  label {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  }
+  input {
+    font-family: var(--mono); font-size: 0.95rem; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--rule-strong);
+    padding: 0.6rem 0.7rem; width: 100%; border-radius: 2px;
+  }
+  input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  button {
+    font-family: var(--mono); font-size: 0.8rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--accent); color: var(--ground); border: 0;
+    padding: 0.72rem 1.4rem; cursor: pointer; border-radius: 2px; align-self: flex-start;
+  }
+  button:hover { filter: brightness(1.12); }
+  button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  button[disabled] { opacity: 0.55; cursor: progress; }
+
+  .keybar { display: flex; flex-direction: column; gap: 0.3rem; }
+  .keybar small { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); line-height: 1.5; }
+  .keybar a { color: var(--accent); }
+
+  /* ---- messages ---- */
+  .msg {
+    margin: 1.5rem 0 0; padding: 0.9rem 1rem; background: var(--flag-soft);
+    border-left: 3px solid var(--flag); font-family: var(--mono); font-size: 0.82rem;
+    line-height: 1.55;
+  }
+  .msg b { font-weight: 600; }
+
+  /* ---- cards ---- */
+  .cards { display: grid; gap: 1.1rem; margin-top: 2rem; grid-template-columns: 1fr; }
+  @media (min-width: 46rem) { .cards.two { grid-template-columns: 1fr 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); padding: 1.35rem 1.4rem 1.5rem; }
+  .card h2 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; line-height: 1.2; }
+  .handle { font-family: var(--mono); font-size: 0.72rem; color: var(--faint); margin: 0.25rem 0 1.1rem; }
+
+  dl { margin: 0; display: flex; flex-direction: column; gap: 0; }
+  .metric {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+    padding: 0.6rem 0; border-bottom: 1px dotted var(--rule);
+  }
+  .metric:last-of-type { border-bottom: 0; }
+  .metric dt { font-size: 0.86rem; color: var(--muted); margin: 0; }
+  .metric dd {
+    margin: 0; font-family: var(--mono); font-size: 1rem; font-weight: 500;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .metric.lead dd { font-size: 1.25rem; font-weight: 600; }
+
+  .spread { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+  .spread-label {
+    display: flex; justify-content: space-between; font-family: var(--mono);
+    font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .bar { height: 6px; background: var(--sunk); position: relative; overflow: hidden; }
+  .bar span { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+  .read { margin: 0.6rem 0 0; font-size: 0.84rem; color: var(--muted); }
+  .read b { color: var(--ink); font-weight: 600; }
+
+  .sample { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); margin: 1.1rem 0 0; }
+
+  /* ---- explainer ---- */
+  .notes { margin-top: 3.5rem; border-top: 1px solid var(--rule); padding-top: 2rem; }
+  .notes h3 { font-size: 1.05rem; font-weight: 600; margin: 0 0 0.8rem; }
+  .notes h3 + p, .notes p { margin: 0 0 1rem; max-width: 62ch; color: var(--muted); font-size: 0.94rem; }
+  .notes p b { color: var(--ink); font-weight: 600; }
+  .notes ul { margin: 0 0 1rem; padding-left: 1.2rem; max-width: 62ch; color: var(--muted); font-size: 0.94rem; }
+  .notes li { margin-bottom: 0.4rem; }
+  .notes code {
+    font-family: var(--mono); font-size: 0.85em; background: var(--sunk);
+    border: 1px solid var(--rule); padding: 0.05em 0.32em; border-radius: 2px;
+  }
+  .notes a { color: var(--accent); }
+  footer {
+    margin-top: 2.5rem; font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint);
+  }
+  footer a { color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">YouTube Data API v3 &middot; live</div>
+    <h1>Creator Scorecard</h1>
+    <p class="lede">
+      Score a YouTube creator the way a brand would, from public data. Two channels can share a
+      subscriber count and be completely different buys.
+    </p>
+  </header>
+
+  <form id="form">
+    <div class="row">
+      <div class="field">
+        <label for="a">Creator</label>
+        <input id="a" name="a" value="@mkbhd" spellcheck="false" autocomplete="off" placeholder="@handle or channel ID">
+      </div>
+      <div class="field">
+        <label for="b">Compare with (optional)</label>
+        <input id="b" name="b" value="@veritasium" spellcheck="false" autocomplete="off" placeholder="@handle or channel ID">
+      </div>
+    </div>
+    <div class="keybar" id="keybar" hidden>
+      <label for="key">Your YouTube API key</label>
+      <input id="key" name="key" type="password" spellcheck="false" autocomplete="off" placeholder="AIza...">
+      <small>
+        Kept in this browser only, never sent anywhere but Google.
+        <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Get a free key</a>,
+        it takes about ten minutes.
+      </small>
+    </div>
+    <button type="submit" id="go">Score</button>
+  </form>
+
+  <div id="msg"></div>
+  <div class="cards" id="cards"></div>
+
+  <section class="notes">
+    <h3>What the numbers mean</h3>
+    <ul>
+      <li><b>Median views</b> is the middle value of the sample, not the average, so one viral hit does not flatter the channel. It is what a sponsored video would realistically reach.</li>
+      <li><b>Views as % of subs</b> shows whether the audience still turns up, or the subscriber number is history.</li>
+      <li><b>Engagement rate</b> is likes plus comments over views, averaged. Whether people react or just watch.</li>
+      <li><b>Days between uploads</b> is the span of the sample divided by the gaps in it.</li>
+      <li><b>View spread</b> is the standard deviation of views as a percentage of the mean. Low means every video lands about the same. High means the channel lives on the odd breakout, and any single placement is a gamble.</li>
+    </ul>
+
+    <h3>How it works</h3>
+    <p>
+      Three calls to the YouTube Data API for each creator: one to find the channel, one to list
+      its recent uploads, one to fetch those videos' statistics. That is <b>3 quota units</b> of
+      the 10,000 a free key gets per day. No server, no database, no build step. The page does the
+      arithmetic itself.
+    </p>
+
+    <h3>About the key in a browser page</h3>
+    <p>
+      Anything a browser page holds, a visitor can read, so a key shipped in the page is a key
+      given away. The fix is not to hide it but to <b>restrict it</b>: in the Google Cloud console
+      an API key can be limited to one website by HTTP referrer, and to one API. A copied key then
+      does nothing from anywhere else. That is why this page can be public.
+    </p>
+    <p>
+      It is a limit, not a lock. Referrers can be forged, so the honest ceiling is that a
+      determined person could spend the free daily quota. For anything with a bill attached, the
+      key belongs on a server the browser never sees.
+    </p>
+
+    <footer>
+      <a href="https://github.com/joe-scan/creator-scorecard">Source on GitHub</a>
+      &middot; Python version in the same repo
+    </footer>
+  </section>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var API = "https://www.googleapis.com/youtube/v3";
+  var SAMPLE = 30;             // how many recent videos to judge a channel on
+  var STORE = "cs-key";        // where a visitor's own key is remembered
+  var BUILT_IN = (window.CREATOR_SCORECARD_KEY || "").trim();
+
+  var form = document.getElementById("form");
+  var keybar = document.getElementById("keybar");
+  var keyInput = document.getElementById("key");
+  var msg = document.getElementById("msg");
+  var cards = document.getElementById("cards");
+  var go = document.getElementById("go");
+
+  // A key baked into the page (restricted by referrer) means no one has to type one.
+  if (!BUILT_IN) {
+    keybar.hidden = false;
+    try {
+      var saved = window.localStorage.getItem(STORE);
+      if (saved) { keyInput.value = saved; }
+    } catch (e) { /* storage blocked: the field just starts empty */ }
+  }
+
+  function currentKey() {
+    return BUILT_IN || keyInput.value.trim();
+  }
+
+  function say(html) {
+    msg.innerHTML = html ? '<div class="msg">' + html + "</div>" : "";
+  }
+
+  // ---- the API ----
+
+  function get(endpoint, params) {
+    params.key = currentKey();
+    var qs = Object.keys(params)
+      .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); })
+      .join("&");
+
+    return fetch(API + "/" + endpoint + "?" + qs).then(function (r) {
+      return r.json().then(function (body) {
+        if (r.ok) { return body; }
+        // 400 bad key or bad request, 403 quota spent or key restricted, 404 not found.
+        var reason = (body.error && body.error.message) || r.statusText;
+        throw new Error("The API said " + r.status + ". " + reason);
+      });
+    });
+  }
+
+  function findChannel(handle) {
+    var params = { part: "snippet,statistics,contentDetails" };
+    // Channel IDs all start with UC. Anything else is treated as a handle.
+    if (/^UC/.test(handle)) { params.id = handle; } else { params.forHandle = handle; }
+
+    return get("channels", params).then(function (data) {
+      if (!data.items || !data.items.length) {
+        throw new Error("No channel found for " + handle + ".");
+      }
+      return data.items[0];
+    });
+  }
+
+  function recentVideos(channel) {
+    var uploads = channel.contentDetails.relatedPlaylists.uploads;
+    return get("playlistItems", {
+      part: "contentDetails", playlistId: uploads, maxResults: SAMPLE
+    }).then(function (data) {
+      var ids = (data.items || []).map(function (i) { return i.contentDetails.videoId; });
+      if (!ids.length) { throw new Error("That channel has no public uploads to measure."); }
+      return get("videos", { part: "snippet,statistics", id: ids.join(",") });
+    }).then(function (data) {
+      return data.items || [];
+    });
+  }
+
+  // ---- the arithmetic, same definitions as the Python version ----
+
+  function median(nums) {
+    var s = nums.slice().sort(function (x, y) { return x - y; });
+    var mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  }
+
+  function mean(nums) {
+    return nums.reduce(function (a, b) { return a + b; }, 0) / nums.length;
+  }
+
+  function stdev(nums) {
+    if (nums.length < 2) { return 0; }
+    var m = mean(nums);
+    var variance = nums.reduce(function (a, n) { return a + (n - m) * (n - m); }, 0) / (nums.length - 1);
+    return Math.sqrt(variance);
+  }
+
+  function score(videos) {
+    var views = [], engagements = [], dates = [];
+
+    videos.forEach(function (v) {
+      var seen = parseInt(v.statistics.viewCount || 0, 10);
+      if (!seen) { return; }   // no views means no ratio, and it would divide by zero
+      views.push(seen);
+      var reactions = parseInt(v.statistics.likeCount || 0, 10)
+                    + parseInt(v.statistics.commentCount || 0, 10);
+      engagements.push(reactions / seen);
+      dates.push(new Date(v.snippet.publishedAt).getTime());
+    });
+
+    if (!views.length) { throw new Error("None of the recent videos have any views to measure."); }
+
+    var spanDays = (Math.max.apply(null, dates) - Math.min.apply(null, dates)) / 86400000;
+
+    return {
+      measured: views.length,
+      medianViews: median(views),
+      engagement: mean(engagements) * 100,
+      cadence: dates.length > 1 ? spanDays / (dates.length - 1) : 0,
+      spread: views.length > 1 ? stdev(views) / mean(views) * 100 : 0
+    };
+  }
+
+  // ---- rendering ----
+
+  function num(n) { return Math.round(n).toLocaleString("en-GB"); }
+
+  function readSpread(spread) {
+    if (spread < 45) {
+      return "Views land in a tight band, so a placement has a <b>predictable floor</b>.";
+    }
+    if (spread < 75) {
+      return "Views vary a fair amount. A single placement carries <b>some risk</b>.";
+    }
+    return "The median is carried by breakout videos, so a single placement is a <b>gamble</b>.";
+  }
+
+  function render(channel, s) {
+    var subs = parseInt(channel.statistics.subscriberCount || 0, 10);
+    var reach = subs ? (s.medianViews / subs * 100).toFixed(1) + "%" : "hidden";
+
+    var el = document.createElement("article");
+    el.className = "card";
+    el.innerHTML =
+      "<h2></h2>" +
+      '<p class="handle"></p>' +
+      "<dl>" +
+        '<div class="metric lead"><dt>Median views per video</dt><dd>' + num(s.medianViews) + "</dd></div>" +
+        '<div class="metric"><dt>Subscribers</dt><dd>' + (subs ? num(subs) : "hidden") + "</dd></div>" +
+        '<div class="metric"><dt>Views as % of subs</dt><dd>' + reach + "</dd></div>" +
+        '<div class="metric"><dt>Engagement rate</dt><dd>' + s.engagement.toFixed(2) + "%</dd></div>" +
+        '<div class="metric"><dt>Days between uploads</dt><dd>' + s.cadence.toFixed(1) + "</dd></div>" +
+      "</dl>" +
+      '<div class="spread">' +
+        '<div class="spread-label"><span>View spread</span><span>' + s.spread.toFixed(0) + "%</span></div>" +
+        '<div class="bar"><span style="width:' + Math.min(s.spread, 100).toFixed(0) + '%"></span></div>' +
+        '<p class="read">' + readSpread(s.spread) + "</p>" +
+      "</div>" +
+      '<p class="sample">Measured on the last ' + s.measured + " videos, live just now.</p>";
+
+    // Set channel-supplied text as text, never as markup.
+    el.querySelector("h2").textContent = channel.snippet.title;
+    el.querySelector(".handle").textContent = channel.snippet.customUrl || channel.id;
+    return el;
+  }
+
+  // ---- one lookup, start to finish ----
+
+  function lookup(handle) {
+    return findChannel(handle).then(function (channel) {
+      return recentVideos(channel).then(function (videos) {
+        return render(channel, score(videos));
+      });
+    });
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    var handles = [document.getElementById("a").value.trim(),
+                   document.getElementById("b").value.trim()].filter(Boolean);
+
+    if (!currentKey()) { say("<b>No API key yet.</b> Paste one in the field above to run this."); return; }
+    if (!handles.length) { say("<b>Nothing to look up.</b> Enter a handle such as @mkbhd."); return; }
+
+    if (!BUILT_IN) {
+      try { window.localStorage.setItem(STORE, keyInput.value.trim()); } catch (err) { /* not fatal */ }
+    }
+
+    say("");
+    cards.innerHTML = "";
+    cards.className = "cards" + (handles.length > 1 ? " two" : "");
+    go.disabled = true;
+    go.textContent = "Scoring";
+
+    Promise.all(handles.map(function (h) {
+      return lookup(h).catch(function (err) { return err; });   // one failure must not sink the other
+    })).then(function (results) {
+      var problems = [];
+      results.forEach(function (r, i) {
+        if (r instanceof Error) { problems.push("<b>" + handles[i] + "</b> " + r.message); }
+        else { cards.appendChild(r); }
+      });
+      if (problems.length) { say(problems.join("<br>")); }
+    }).then(function () {
+      go.disabled = false;
+      go.textContent = "Score";
+    });
+  });
+
+  // Show something real on arrival if the page already carries its own key.
+  if (BUILT_IN) { form.dispatchEvent(new Event("submit")); }
+})();
+</script>
+</body>
+</html>
