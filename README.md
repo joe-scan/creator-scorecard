@@ -67,6 +67,7 @@ The two platforms authenticate differently, and the difference is the point of t
 | How it travels | On the query string | Swapped for a token, sent as a `Bearer` header |
 | Lifetime | Until you revoke it | Weeks, then it expires and you swap again |
 | The flow | None, it is just a password | OAuth client credentials grant |
+| When it fails | The key is simply wrong | A 401, so you mint a new token and retry |
 | Safe in a browser? | Yes, if restricted by referrer | **No.** The secret would be public |
 
 In one line: a key is a password you keep sending, a token is something you are issued and that
@@ -113,7 +114,12 @@ unrestricted, is how you run both. The script says so if you get it wrong.
 Three units per creator, out of the 10,000 a free YouTube key gets each day. Fetching each
 video separately would cost 32 units for the same answer, which is what batching saves. Twitch
 does not meter by credit, and the access token is cached in a gitignored file so it is only
-requested once every few weeks.
+requested once every couple of months.
+
+A cached token eventually goes stale, so `twitch.py` treats a 401 as normal: it throws the
+token away, asks for a new one, and retries the call once. That retry is the whole practical
+difference between a token and a key. Tested by poisoning the cache with a dead token, which
+the script recovers from without being told.
 
 ## What the numbers mean
 

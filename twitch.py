@@ -69,30 +69,50 @@ def get_token(client_id, client_secret):
 
 # ---- the calls ----
 
-def _get(endpoint, client_id, token, **params):
-    r = requests.get(f"{API}/{endpoint}", params=params, timeout=15, headers={
-        "Client-Id": client_id,
-        "Authorization": f"Bearer {token}",     # the token goes in a header, not the URL
-    })
-    if r.status_code == 401:
-        raise RuntimeError("Twitch said 401. The token has expired or been revoked. "
-                           "Delete .twitch_token.json and run again.")
-    if not r.ok:
-        raise RuntimeError(f"Twitch said {r.status_code}: {r.text[:200]}")
-    return r.json()
+def _forget_token():
+    try:
+        os.remove(TOKEN_CACHE)
+    except OSError:
+        pass
+
+
+def _get(endpoint, client_id, client_secret, **params):
+    """One call, and the thing that makes tokens workable: refresh and retry on a 401.
+
+    A token expires, so any code using one must expect a 401 and mint a new one
+    rather than fail. That single retry is the whole difference between a token and
+    a key in practice.
+    """
+    for attempt in (1, 2):
+        token = get_token(client_id, client_secret)
+        r = requests.get(f"{API}/{endpoint}", params=params, timeout=15, headers={
+            "Client-Id": client_id,
+            "Authorization": f"Bearer {token}",  # the token goes in a header, not the URL
+        })
+
+        if r.status_code == 401 and attempt == 1:
+            _forget_token()                      # stale or revoked, so get a fresh one
+            continue
+        if r.status_code == 401:
+            raise RuntimeError("Twitch said 401 even with a freshly issued token. "
+                               "Check the client ID and secret in .env.")
+        if r.status_code == 429:
+            raise RuntimeError("Twitch said 429. Too many requests, so wait and retry.")
+        if not r.ok:
+            raise RuntimeError(f"Twitch said {r.status_code}: {r.text[:200]}")
+        return r.json()
 
 
 def fetch(login, client_id, client_secret, limit=SAMPLE):
-    token = get_token(client_id, client_secret)
     login = login.lstrip("@")
 
-    users = _get("users", client_id, token, login=login)
+    users = _get("users", client_id, client_secret, login=login)
     if not users.get("data"):
         raise RuntimeError(f"No Twitch channel found for {login}.")
     user = users["data"][0]
 
     # Past broadcasts. Twitch calls them archives, and only keeps them for a while.
-    vods = _get("videos", client_id, token,
+    vods = _get("videos", client_id, client_secret,
                 user_id=user["id"], type="archive", first=min(limit, 100))
 
     views, stamps = [], []
