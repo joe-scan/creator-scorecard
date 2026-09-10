@@ -1,0 +1,65 @@
+# creator-scorecard
+
+A small command line tool that scores a YouTube creator the way a brand would look at them.
+Give it a handle, it gives you the numbers back.
+
+```
+$ python youtube_scorecard.py @mkbhd
+
+Marques Brownlee
+----------------
+Subscribers                 20,100,000
+Median views per video       1,842,301
+Views as % of subs                9.2%
+Engagement rate                  4.31%
+Days between uploads               3.4
+View spread                        61%
+
+Measured on the last 30 videos.
+```
+
+## What the numbers mean
+
+| Number | How it is worked out | Why a brand cares |
+| --- | --- | --- |
+| Median views per video | The middle value of the last 30 videos, not the average, so one viral hit does not flatter the channel | What a sponsored video would realistically reach |
+| Views as % of subs | Median views divided by subscriber count | Whether the audience still shows up, or the subscriber number is historical |
+| Engagement rate | Likes plus comments, divided by views, averaged across the sample | Whether people react or just watch |
+| Days between uploads | The span of the sample divided by the gaps in it | Whether the channel is active and predictable |
+| View spread | Standard deviation of views as a percentage of the mean | Low means every video lands about the same. High means the channel lives on the odd breakout |
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env      # then paste your key into .env
+python youtube_scorecard.py @mkbhd
+```
+
+Getting a key takes about ten minutes and costs nothing:
+
+1. Open `console.cloud.google.com` and sign in.
+2. Create a new project, any name.
+3. APIs and Services, then Library. Search for YouTube Data API v3 and enable it.
+4. Credentials, Create Credentials, API key. Copy it into `.env`.
+
+`.env` is gitignored, so your key stays on your machine.
+
+## Quota
+
+A free key gets 10,000 units a day. One run of this costs 3 units: one call to find the
+channel, one to list its recent uploads, one to fetch those videos' statistics. So roughly
+3,000 runs a day before it stops.
+
+If it does stop, the API returns HTTP 403 and the script prints the reason it gave.
+
+## Limits worth knowing
+
+- **One page of uploads.** The playlist call takes up to 50 videos in one request. Going deeper
+  means following `pageToken` through more pages, which this does not do yet.
+- **Public data only.** No audience demographics, no location, no age split. That needs either
+  the creator's own permission or a paid data provider.
+- **YouTube only.** A subscriber here is not the same unit as a follower on Instagram or TikTok,
+  which is the interesting part of adding a second platform.
+- **Instagram and TikTok are not free.** Both need app review and a business account, which is
+  why companies pay for creator data rather than collecting it themselves.
