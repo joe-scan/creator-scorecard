@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Creator Scorecard</title>
-<meta name="description" content="Score a YouTube creator the way a brand would. Live from the YouTube Data API.">
+<meta name="description" content="Same subscriber count, completely different buy. Scores a YouTube creator live from the API.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -191,8 +191,8 @@
     <div class="eyebrow">YouTube Data API v3 &middot; live</div>
     <h1>Creator Scorecard</h1>
     <p class="lede">
-      Score a YouTube creator the way a brand would, from public data. Two channels can share a
-      subscriber count and be completely different buys.
+      Two channels can have the same subscriber count and be completely different buys. This
+      works out which is which, live, from public data.
     </p>
   </header>
 
@@ -211,7 +211,7 @@
       <label for="key">Your YouTube API key</label>
       <input id="key" name="key" type="password" spellcheck="false" autocomplete="off" placeholder="AIza...">
       <small>
-        Kept in this browser only, never sent anywhere but Google.
+        Stays in this browser. Never sent anywhere but Google.
         <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Get a free key</a>,
         it takes about ten minutes.
       </small>
@@ -225,50 +225,49 @@
   <section class="notes">
     <h3>What the numbers mean</h3>
     <ul>
-      <li><b>Median views</b> is the middle value of the sample, not the average, so one viral hit does not flatter the channel. It is what a sponsored video would realistically reach.</li>
-      <li><b>Views as % of subs</b> shows whether the audience still turns up, or the subscriber number is history.</li>
-      <li><b>Engagement rate</b> is likes plus comments over views, averaged. Whether people react or just watch.</li>
-      <li><b>Days between uploads</b> is the span of the sample divided by the gaps in it.</li>
-      <li><b>View spread</b> is the standard deviation of views as a percentage of the mean. Low means every video lands about the same. High means the channel lives on the odd breakout, and any single placement is a gamble.</li>
+      <li><b>Median views.</b> The middle of the last 30, so one runaway hit can't drag the number up. Roughly what a sponsored video would reach.</li>
+      <li><b>Views as % of subs.</b> Whether the audience still turns up. A huge subscriber count with thin views means those people signed up years ago and left.</li>
+      <li><b>Engagement rate.</b> Likes plus comments over views. Do people react, or just watch?</li>
+      <li><b>Days between uploads.</b> How active the channel is, and how predictable.</li>
+      <li><b>View spread.</b> Standard deviation as a percentage of the mean. At 38% every video lands in roughly the same band, so a placement has a floor. At 79% the median is propped up by the occasional breakout and one placement is a gamble.</li>
     </ul>
 
     <h3>How it works</h3>
     <p>
-      Three calls to the YouTube Data API for each creator: one to find the channel, one to list
-      its recent uploads, one to fetch those videos' statistics. That is <b>3 quota units</b> of
-      the 10,000 a free key gets per day. No server, no database, no build step. The page does the
-      arithmetic itself.
+      Three calls per creator. Find the channel, list its recent uploads, then fetch the
+      statistics for all 30 videos in one go. Costs <b>3 quota units</b>. A free key gets 10,000
+      a day, so you'd have to look up 3,000 creators before it stopped. Asking for each video
+      separately would cost 32 units for the same answer. The page does the maths itself: no
+      server, no database, no build step.
     </p>
 
-    <h3>Why Twitch is not on this page</h3>
+    <h3>Why Twitch isn't on this page</h3>
     <p>
-      There is a second half to this project, and it cannot run in a browser. Twitch does not
-      accept a key. It makes you swap a client ID and <b>secret</b> for a short-lived access
-      token, then send that token as a <code>Bearer</code> header. A browser page is public, so a
-      secret in one is not a secret. Twitch therefore lives in the command line version, where
-      the credentials stay on the machine.
+      Twitch won't take a key. You swap a client ID and <b>secret</b> for an access token, then
+      send that token as a <code>Bearer</code> header on every call. The secret is the problem.
+      This page is public, so anything in it is public, and a public secret is no use to anyone.
+      Twitch runs on the command line instead, where the credentials stay on my machine.
     </p>
 
     <div class="authgrid">
       <div class="h"></div><div class="h">YouTube</div><div class="h">Twitch</div>
       <div class="k">Credential</div><div>An API key</div><div>A client ID and secret</div>
       <div class="k">How it travels</div><div>On the query string</div><div>Swapped for a token, sent as a header</div>
-      <div class="k">Lifetime</div><div>Until you revoke it</div><div>About 60 days, then it expires</div>
-      <div class="k">When it fails</div><div>The key is simply wrong</div><div>A 401, so mint a new token and retry</div>
+      <div class="k">Lifetime</div><div>Until you revoke it</div><div>About 60 days</div>
+      <div class="k">When it fails</div><div>The key's wrong</div><div>A 401. Get a new token and retry</div>
       <div class="k">Safe in this page?</div><div>Yes, once restricted</div><div class="no">No</div>
     </div>
 
     <p>
-      In one line: a key is a password you keep sending, a token is something you are issued and
-      that runs out. That difference is the honest reason real products have a backend.
+      A key is a password you keep sending. A token gets issued to you and expires. That's the
+      real reason products have a backend, and it took building both to see it.
     </p>
 
-    <h3>What the command line version does with both</h3>
+    <h3>Both platforms, one table</h3>
     <p>
-      Two platforms do not describe a creator the same way, so they cannot be merged without
-      deciding what the merged thing means. A YouTube subscriber is not a Twitch follower. The
-      rule is that each platform fills the fields it can and states the rest, with the reason
-      attached. Nothing is estimated to fill a hole.
+      A YouTube subscriber and a Twitch follower aren't the same thing, so putting them in one
+      table means deciding what the merged number means. Here each platform fills in what it can
+      and says why the rest is blank. Nothing gets estimated.
     </p>
 
     <div class="terminal"><pre><span class="cmd">$ python scorecard.py youtube:@mkbhd twitch:pokimane</span>
@@ -290,26 +289,28 @@ What is missing, and why:
   Twitch. Engagement rate: past broadcasts carry no public likes or
      comments, so there is nothing to divide by views.</pre></div>
     <p class="caption">
-      Real output, run on 10 September 2026. Not live on this page, because of the secret.
+      Real output, 10 September 2026. Static here, for the reason above.
     </p>
 
     <p>
-      Those two holes are not bugs. They are the reason companies buy creator data instead of
-      collecting it: the fields worth having need either the creator's permission or a provider
-      who already holds them.
+      Both blanks are real. Twitch will only give a follower count to a token the creator
+      authorised themselves, and past broadcasts carry no likes or comments to count. That's why
+      companies buy creator data rather than collecting it. The fields worth having need
+      permission you haven't got.
     </p>
 
-    <h3>About the key in a browser page</h3>
+    <h3>The key sitting in this page</h3>
     <p>
-      Anything a browser page holds, a visitor can read, so a key shipped in the page is a key
-      given away. The fix is not to hide it but to <b>restrict it</b>: in the Google Cloud console
-      an API key can be limited to one website by HTTP referrer, and to one API. A copied key then
-      does nothing from anywhere else. That is why this page can be public.
+      You can read it. So can anyone. Hiding a key in a web page isn't possible, so this one is
+      <b>restricted</b> instead: in the Google Cloud console it's tied to one website by HTTP
+      referrer, and to the YouTube Data API alone. Copy it and it won't work anywhere but here.
+      I tested that from an empty referrer, from another domain, and against a different Google
+      API. Refused all three.
     </p>
     <p>
-      It is a limit, not a lock. Referrers can be forged, so the honest ceiling is that a
-      determined person could spend the free daily quota. For anything with a bill attached, the
-      key belongs on a server the browser never sees.
+      Referrers can be forged, though, so someone determined could still spend the free daily
+      quota. Nothing worse than that. Put a bill on the other end and the key would have to live
+      on a server the browser never sees.
     </p>
 
     <footer>
@@ -449,12 +450,12 @@ What is missing, and why:
 
   function readSpread(spread) {
     if (spread < 45) {
-      return "Views land in a tight band, so a placement has a <b>predictable floor</b>.";
+      return "Every video lands in roughly the same band, so a placement has a <b>floor</b>.";
     }
     if (spread < 75) {
-      return "Views vary a fair amount. A single placement carries <b>some risk</b>.";
+      return "Views bounce around a fair bit, so one placement carries <b>some risk</b>.";
     }
-    return "The median is carried by breakout videos, so a single placement is a <b>gamble</b>.";
+    return "The median is propped up by the odd breakout, so one placement is a <b>gamble</b>.";
   }
 
   function render(channel, s) {
