@@ -1,33 +1,137 @@
 # creator-scorecard
 
-A small command line tool that scores a YouTube creator the way a brand would look at them.
-Give it a handle, it gives you the numbers back.
+Score creators the way a brand would, across platforms, from public data. Two channels can
+share an audience number and be completely different buys.
 
 ```
-$ python youtube_scorecard.py @mkbhd
+$ python scorecard.py youtube:@mkbhd youtube:@veritasium
 
-Marques Brownlee
-----------------
-Subscribers                 21,200,000
-Median views per video       3,631,714
-Views as % of subs               17.1%
-Engagement rate                  3.10%
-Days between uploads               4.1
-View spread                        39%
-
-Measured on the last 30 videos.
+                      Marques Brownlee          Veritasium
+                      YouTube @mkbhd            YouTube @veritasium
+--------------------------------------------------------------------------
+Audience                       21,200,000 subs           21,200,000 subs
+Median reach               3,932,536 per video       3,115,869 per video
+Engagement rate                          3.01%                     2.94%
+Days between posts                         4.1                       3.9
+Reach spread                               38%                       79%
+--------------------------------------------------------------------------
+Sample                                30 items                  30 items
 ```
 
-A handle or a channel ID both work: `@veritasium` and `UCXuqSBlHAE6Xw-yeJA0Tunw` are equally
-valid arguments.
+Same audience to the nearest hundred thousand. Brownlee's reach spread is 38%, so his videos
+land in a tight band and a placement has a predictable floor. Veritasium's is 79%, so a similar
+median is carried by breakout videos and any single placement is a gamble. The audience number,
+the one quoted in every media kit, is the least useful row in the table.
+
+## The interesting problem
+
+Two platforms do not describe a creator the same way, so they cannot be merged without deciding
+what the merged thing means. A YouTube subscriber is not a Twitch follower. Views on a video are
+not views on a past broadcast.
+
+The rule here is that a platform fills the fields it can and states the rest, with the reason
+attached. Nothing is estimated to fill a hole.
+
+```
+$ python scorecard.py youtube:@mkbhd twitch:pokimane
+
+                      Marques Brownlee          Pokimane
+                      YouTube @mkbhd            Twitch pokimane
+--------------------------------------------------------------------------
+Audience                       21,200,000 subs             not available
+Median reach               3,932,536 per video         41,233 per stream
+Engagement rate                          3.01%             not available
+Days between posts                         4.1                       2.2
+Reach spread                               38%                       66%
+--------------------------------------------------------------------------
+Sample                                30 items                  24 items
+
+What is missing, and why:
+  Twitch. Followers: Twitch only gives a follower count to a token the
+     creator has personally authorised, so an app token cannot see it.
+  Twitch. Engagement rate: past broadcasts carry no public likes or
+     comments, so there is nothing to divide by views.
+```
+
+Those two holes are not bugs. They are the reason companies buy creator data instead of
+collecting it: the useful fields need either the creator's permission or a provider who already
+has it.
+
+## Two ways of proving who you are
+
+The two platforms authenticate differently, and the difference is the point of the project.
+
+| | YouTube | Twitch |
+| --- | --- | --- |
+| Credential | An API key | A client ID and secret |
+| How it travels | On the query string | Swapped for a token, sent as a `Bearer` header |
+| Lifetime | Until you revoke it | Weeks, then it expires and you swap again |
+| The flow | None, it is just a password | OAuth client credentials grant |
+| Safe in a browser? | Yes, if restricted by referrer | **No.** The secret would be public |
+
+In one line: a key is a password you keep sending, a token is something you are issued and that
+runs out.
+
+That last row is why the web version of this project is YouTube only. A browser page cannot hold
+a secret, so anything needing one belongs on a server. This is the honest reason real products
+have a backend.
+
+## Layout
+
+| File | What it does |
+| --- | --- |
+| `metrics.py` | The arithmetic, and the one schema both platforms have to fit. The interesting file |
+| `youtube.py` | Fetches YouTube, converts it to that schema |
+| `twitch.py` | Fetches Twitch, converts it to that schema, declares what it cannot get |
+| `scorecard.py` | The command line, and reading credentials |
+| `docs/` | The browser version, YouTube only. See below |
+
+## Setup
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env      # then fill in your credentials
+python scorecard.py youtube:@mkbhd
+```
+
+`.env` is gitignored. YouTube needs an API key from the Google Cloud console. Twitch needs an
+application registered at `dev.twitch.tv/console`, which gives you a client ID and a secret.
+`.env.example` has the steps for both.
+
+**One key per use.** A YouTube key restricted to a website cannot be used from a command line,
+because a command line sends no referrer. Restricting by IP address, or leaving a second key
+unrestricted, is how you run both. The script says so if you get it wrong.
+
+## Cost
+
+| Call | Quota |
+| --- | --- |
+| Find the channel | 1 unit |
+| List recent uploads | 1 unit |
+| Fetch statistics for all of them, batched | 1 unit |
+
+Three units per creator, out of the 10,000 a free YouTube key gets each day. Fetching each
+video separately would cost 32 units for the same answer, which is what batching saves. Twitch
+does not meter by credit, and the access token is cached in a gitignored file so it is only
+requested once every few weeks.
+
+## What the numbers mean
+
+| Row | How it is worked out | Why a brand cares |
+| --- | --- | --- |
+| Audience | Subscribers or followers, whichever the platform reports, labelled as such | The headline number, and the least informative one |
+| Median reach | The middle value of the sample, not the average, so one viral hit does not flatter the channel | What a sponsored post would realistically reach |
+| Engagement rate | Likes plus comments over views, averaged | Whether people react or just watch |
+| Days between posts | The span of the sample divided by the gaps in it | Whether the channel is active and predictable |
+| Reach spread | Standard deviation as a percentage of the mean | Low means every post lands about the same. High means the channel lives on the odd breakout |
 
 ## The web version
 
 ![The scorecard comparing two channels](docs/screenshot.png)
 
-One file, `docs/index.html`. No server, no build step, no dependencies. It makes the same three
-API calls the Python script does and works out the same numbers, then shows two creators side by
-side.
+Live at **[joe-scan.github.io/creator-scorecard](https://joe-scan.github.io/creator-scorecard/)**.
+One file, `docs/index.html`. No server, no build step, no dependencies. YouTube only, for the
+reason in the auth table above.
 
 Run it locally:
 
@@ -36,16 +140,12 @@ cd docs
 python3 -m http.server 8000     # then open http://localhost:8000
 ```
 
-It needs a key. Paste one into the field on the page and it is remembered in your browser only,
-or put one in `docs/config.js` to skip the field entirely. Read the next section before doing
-that on a public site.
-
 ### The key in a browser page
 
 Anything a browser page holds, a visitor can read, so a key shipped in a page is a key given
 away. The fix is not to hide it but to restrict it. In the Google Cloud console:
 
-- **Application restrictions**, Websites, add the site that is allowed to use it.
+- **Application restrictions**, Websites, add the one site allowed to use it.
 - **API restrictions**, Restrict key, YouTube Data API v3 only.
 
 A copied key then does nothing from anywhere else, which is why a restricted key can sit in a
@@ -55,70 +155,13 @@ It is a limit, not a lock. Referrers can be forged, so the honest ceiling is tha
 person could spend the free daily quota. For anything with a bill attached, the key belongs on a
 server the browser never sees.
 
-## What the numbers mean
-
-| Number | How it is worked out | Why a brand cares |
-| --- | --- | --- |
-| Median views per video | The middle value of the last 30 videos, not the average, so one viral hit does not flatter the channel | What a sponsored video would realistically reach |
-| Views as % of subs | Median views divided by subscriber count | Whether the audience still shows up, or the subscriber number is historical |
-| Engagement rate | Likes plus comments, divided by views, averaged across the sample | Whether people react or just watch |
-| Days between uploads | The span of the sample divided by the gaps in it | Whether the channel is active and predictable |
-| View spread | Standard deviation of views as a percentage of the mean | Low means every video lands about the same. High means the channel lives on the odd breakout |
-
-## Setup
-
-```bash
-pip install -r requirements.txt
-cp .env.example .env      # then paste your key into .env
-python youtube_scorecard.py @mkbhd
-```
-
-Getting a key takes about ten minutes and costs nothing:
-
-1. Open `console.cloud.google.com` and sign in.
-2. Create a new project, any name.
-3. APIs and Services, then Library. Search for YouTube Data API v3 and enable it.
-4. Credentials, Create Credentials, API key. Copy it into `.env`.
-
-`.env` is gitignored, so your key stays on your machine.
-
-## Quota
-
-A free key gets 10,000 units a day. One run of this costs 3 units: one call to find the
-channel, one to list its recent uploads, one to fetch those videos' statistics. So roughly
-3,000 runs a day before it stops.
-
-If it does stop, the API returns HTTP 403 and the script prints the reason it gave.
-
 ## Limits worth knowing
 
-- **One page of uploads.** The playlist call takes up to 50 videos in one request. Going deeper
-  means following `pageToken` through more pages, which this does not do yet.
-- **Public data only.** No audience demographics, no location, no age split. That needs either
-  the creator's own permission or a paid data provider.
-- **YouTube only.** A subscriber here is not the same unit as a follower on Instagram or TikTok,
-  which is the interesting part of adding a second platform.
-- **Instagram and TikTok are not free.** Both need app review and a business account, which is
-  why companies pay for creator data rather than collecting it themselves.
-
-## Comparing three channels
-
-Run on the same day, on the last 30 uploads of each.
-
-| | MKBHD | Veritasium | Linus Tech Tips |
-| --- | --- | --- | --- |
-| Subscribers | 21,200,000 | 21,200,000 | 16,900,000 |
-| Median views | 3,631,714 | 3,113,885 | 1,165,410 |
-| Views as % of subs | 17.1% | 14.7% | 6.9% |
-| Engagement rate | 3.10% | 2.89% | 2.61% |
-| Days between uploads | 4.1 | 3.9 | 1.2 |
-| View spread | 39% | 79% | 68% |
-
-Two channels with an identical subscriber count are not the same buy. MKBHD's views land in a
-tight band, so a sponsored video has a predictable floor. Veritasium reaches a similar median
-off a spread twice as wide, meaning the average is carried by breakout videos and any single
-placement is a gamble. Linus Tech Tips posts nearly daily to a smaller share of its own
-subscribers, which is a volume strategy rather than an event one.
-
-The subscriber count, the number most often quoted in a media kit, is the least useful column
-here.
+- **One page of results.** `youtube.py` follows `pageToken` but is called with `pages=1`, so it
+  takes the most recent 30. Deeper history means more pages and more quota.
+- **Public data only.** No audience demographics, no location, no age split. That needs the
+  creator's permission or a paid provider.
+- **Instagram and TikTok are not here.** Both need app review and a business account, which is
+  weeks of waiting rather than an afternoon.
+- **The data is live.** Numbers move between runs, so anything quoted needs the date it was
+  pulled.
