@@ -8,15 +8,18 @@ $ python youtube_scorecard.py @mkbhd
 
 Marques Brownlee
 ----------------
-Subscribers                 20,100,000
-Median views per video       1,842,301
-Views as % of subs                9.2%
-Engagement rate                  4.31%
-Days between uploads               3.4
-View spread                        61%
+Subscribers                 21,200,000
+Median views per video       3,631,714
+Views as % of subs               17.1%
+Engagement rate                  3.10%
+Days between uploads               4.1
+View spread                        39%
 
 Measured on the last 30 videos.
 ```
+
+A handle or a channel ID both work: `@veritasium` and `UCXuqSBlHAE6Xw-yeJA0Tunw` are equally
+valid arguments.
 
 ## What the numbers mean
 
@@ -63,3 +66,25 @@ If it does stop, the API returns HTTP 403 and the script prints the reason it ga
   which is the interesting part of adding a second platform.
 - **Instagram and TikTok are not free.** Both need app review and a business account, which is
   why companies pay for creator data rather than collecting it themselves.
+
+## Comparing three channels
+
+Run on the same day, on the last 30 uploads of each.
+
+| | MKBHD | Veritasium | Linus Tech Tips |
+| --- | --- | --- | --- |
+| Subscribers | 21,200,000 | 21,200,000 | 16,900,000 |
+| Median views | 3,631,714 | 3,113,885 | 1,165,410 |
+| Views as % of subs | 17.1% | 14.7% | 6.9% |
+| Engagement rate | 3.10% | 2.89% | 2.61% |
+| Days between uploads | 4.1 | 3.9 | 1.2 |
+| View spread | 39% | 79% | 68% |
+
+Two channels with an identical subscriber count are not the same buy. MKBHD's views land in a
+tight band, so a sponsored video has a predictable floor. Veritasium reaches a similar median
+off a spread twice as wide, meaning the average is carried by breakout videos and any single
+placement is a gamble. Linus Tech Tips posts nearly daily to a smaller share of its own
+subscribers, which is a volume strategy rather than an event one.
+
+The subscriber count, the number most often quoted in a media kit, is the least useful column
+here.
