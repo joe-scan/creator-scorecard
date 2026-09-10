@@ -5,4 +5,4 @@
 //   Credentials -> your key -> API restrictions -> Restrict key -> YouTube Data API v3
 // Then paste it below and commit. Leave it empty and the page asks each
 // visitor for their own key instead.
-window.CREATOR_SCORECARD_KEY = "";
+window.CREATOR_SCORECARD_KEY = "AIzaSyD7uowvJLpA1S9S0yfpYrMves5TZaScw08";
