@@ -152,6 +152,31 @@
     border: 1px solid var(--rule); padding: 0.05em 0.32em; border-radius: 2px;
   }
   .notes a { color: var(--accent); }
+
+  .terminal {
+    background: var(--sunk); border: 1px solid var(--rule);
+    padding: 1rem 1.1rem; margin: 0 0 0.7rem; overflow-x: auto;
+  }
+  .terminal pre {
+    margin: 0; font-family: var(--mono); font-size: 0.74rem; line-height: 1.7;
+    color: var(--ink); white-space: pre;
+  }
+  .terminal .cmd { color: var(--accent); font-weight: 500; }
+  .terminal .gap { color: var(--flag); }
+  .caption { font-family: var(--mono); font-size: 0.68rem; color: var(--faint); margin: 0 0 1.4rem; }
+
+  .authgrid {
+    display: grid; grid-template-columns: minmax(7rem, auto) 1fr 1fr; gap: 0;
+    margin: 0 0 1.2rem; font-size: 0.88rem; max-width: 46rem;
+  }
+  .authgrid > * { padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--rule); }
+  .authgrid .h {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .authgrid .k { color: var(--muted); font-size: 0.82rem; }
+  .authgrid .no { color: var(--flag); font-weight: 600; }
   footer {
     margin-top: 2.5rem; font-family: var(--mono); font-size: 0.68rem;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint);
@@ -215,6 +240,65 @@
       arithmetic itself.
     </p>
 
+    <h3>Why Twitch is not on this page</h3>
+    <p>
+      There is a second half to this project, and it cannot run in a browser. Twitch does not
+      accept a key. It makes you swap a client ID and <b>secret</b> for a short-lived access
+      token, then send that token as a <code>Bearer</code> header. A browser page is public, so a
+      secret in one is not a secret. Twitch therefore lives in the command line version, where
+      the credentials stay on the machine.
+    </p>
+
+    <div class="authgrid">
+      <div class="h"></div><div class="h">YouTube</div><div class="h">Twitch</div>
+      <div class="k">Credential</div><div>An API key</div><div>A client ID and secret</div>
+      <div class="k">How it travels</div><div>On the query string</div><div>Swapped for a token, sent as a header</div>
+      <div class="k">Lifetime</div><div>Until you revoke it</div><div>About 60 days, then it expires</div>
+      <div class="k">When it fails</div><div>The key is simply wrong</div><div>A 401, so mint a new token and retry</div>
+      <div class="k">Safe in this page?</div><div>Yes, once restricted</div><div class="no">No</div>
+    </div>
+
+    <p>
+      In one line: a key is a password you keep sending, a token is something you are issued and
+      that runs out. That difference is the honest reason real products have a backend.
+    </p>
+
+    <h3>What the command line version does with both</h3>
+    <p>
+      Two platforms do not describe a creator the same way, so they cannot be merged without
+      deciding what the merged thing means. A YouTube subscriber is not a Twitch follower. The
+      rule is that each platform fills the fields it can and states the rest, with the reason
+      attached. Nothing is estimated to fill a hole.
+    </p>
+
+    <div class="terminal"><pre><span class="cmd">$ python scorecard.py youtube:@mkbhd twitch:pokimane</span>
+
+                      Marques Brownlee          pokimane
+                      YouTube @mkbhd            Twitch pokimane
+--------------------------------------------------------------------------
+Audience                       21,200,000 subs             <span class="gap">not available</span>
+Median reach               3,932,536 per video        152,383 per stream
+Engagement rate                          3.01%             <span class="gap">not available</span>
+Days between posts                         4.1                       5.6
+Reach spread                               38%                       53%
+--------------------------------------------------------------------------
+Sample                                30 items                  30 items
+
+What is missing, and why:
+  Twitch. Followers: Twitch only gives a follower count to a token the
+     creator has personally authorised, so an app token cannot see it.
+  Twitch. Engagement rate: past broadcasts carry no public likes or
+     comments, so there is nothing to divide by views.</pre></div>
+    <p class="caption">
+      Real output, run on 10 September 2026. Not live on this page, because of the secret.
+    </p>
+
+    <p>
+      Those two holes are not bugs. They are the reason companies buy creator data instead of
+      collecting it: the fields worth having need either the creator's permission or a provider
+      who already holds them.
+    </p>
+
     <h3>About the key in a browser page</h3>
     <p>
       Anything a browser page holds, a visitor can read, so a key shipped in the page is a key
@@ -230,7 +314,7 @@
 
     <footer>
       <a href="https://github.com/joe-scan/creator-scorecard">Source on GitHub</a>
-      &middot; Python version in the same repo
+      &middot; Python version, with Twitch, in the same repo
     </footer>
   </section>
 
