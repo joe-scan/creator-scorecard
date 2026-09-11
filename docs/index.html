@@ -303,14 +303,15 @@ What is missing, and why:
     <p>
       You can read it. So can anyone. Hiding a key in a web page isn't possible, so this one is
       <b>restricted</b> instead: in the Google Cloud console it's tied to one website by HTTP
-      referrer, and to the YouTube Data API alone. Copy it and it won't work anywhere but here.
-      I tested that from an empty referrer, from another domain, and against a different Google
-      API. Refused all three.
+      referrer, and to the YouTube Data API alone. A browser on any other site gets a 403. I
+      tested that from an empty referrer and from another domain.
     </p>
     <p>
-      Referrers can be forged, though, so someone determined could still spend the free daily
-      quota. Nothing worse than that. Put a bill on the other end and the key would have to live
-      on a server the browser never sees.
+      That stops a browser, not a person. Send the right <code>Referer</code> header by hand and the
+      key works, which I also tested. So this is a speed bump rather than a lock. The worst case
+      is someone spending the free daily quota, and nothing beyond it, because the key can only
+      reach one API. Put a bill on the other end and it would have to live on a server the
+      browser never sees.
     </p>
 
     <footer>

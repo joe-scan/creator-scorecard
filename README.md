@@ -25,26 +25,26 @@ the one quoted in every media kit, is the least useful row in the table.
 
 ## The interesting problem
 
-Two platforms do not describe a creator the same way, so they cannot be merged without deciding
-what the merged thing means. A YouTube subscriber is not a Twitch follower. Views on a video are
-not views on a past broadcast.
+A YouTube subscriber and a Twitch follower aren't the same thing. Neither are views on a video
+and views on a past broadcast. So putting two platforms in one table means deciding what the
+merged number means.
 
-The rule here is that a platform fills the fields it can and states the rest, with the reason
-attached. Nothing is estimated to fill a hole.
+The rule here: each platform fills what it can and says why the rest is blank. Nothing gets
+estimated.
 
 ```
 $ python scorecard.py youtube:@mkbhd twitch:pokimane
 
-                      Marques Brownlee          Pokimane
+                      Marques Brownlee          pokimane
                       YouTube @mkbhd            Twitch pokimane
 --------------------------------------------------------------------------
 Audience                       21,200,000 subs             not available
-Median reach               3,932,536 per video         41,233 per stream
+Median reach               3,932,536 per video        152,383 per stream
 Engagement rate                          3.01%             not available
-Days between posts                         4.1                       2.2
-Reach spread                               38%                       66%
+Days between posts                         4.1                       5.6
+Reach spread                               38%                       53%
 --------------------------------------------------------------------------
-Sample                                30 items                  24 items
+Sample                                30 items                  30 items
 
 What is missing, and why:
   Twitch. Followers: Twitch only gives a follower count to a token the
@@ -53,9 +53,9 @@ What is missing, and why:
      comments, so there is nothing to divide by views.
 ```
 
-Those two holes are not bugs. They are the reason companies buy creator data instead of
-collecting it: the useful fields need either the creator's permission or a provider who already
-has it.
+Both blanks are real. Twitch only hands a follower count to a token the creator authorised
+themselves, and past broadcasts carry no likes or comments to count. That's why companies buy
+creator data rather than collecting it. The fields worth having need permission you haven't got.
 
 ## Two ways of proving who you are
 
@@ -113,7 +113,7 @@ unrestricted, is how you run both. The script says so if you get it wrong.
 
 Three units per creator, out of the 10,000 a free YouTube key gets each day. Fetching each
 video separately would cost 32 units for the same answer, which is what batching saves. Twitch
-does not meter by credit, and the access token is cached in a gitignored file so it is only
+doesn't meter by credit, and the access token is cached in a gitignored file so it's only
 requested once every couple of months.
 
 A cached token eventually goes stale, so `twitch.py` treats a 401 as normal: it throws the
@@ -136,8 +136,8 @@ the script recovers from without being told.
 ![The scorecard comparing two channels](docs/screenshot.png)
 
 Live at **[joe-scan.github.io/creator-scorecard](https://joe-scan.github.io/creator-scorecard/)**.
-One file, `docs/index.html`. No server, no build step, no dependencies. YouTube only, for the
-reason in the auth table above.
+Two files, `docs/index.html` and `docs/config.js`, plus Google Fonts. No server, no build step,
+no libraries. YouTube only, for the reason in the auth table above.
 
 Run it locally:
 
@@ -148,23 +148,24 @@ python3 -m http.server 8000     # then open http://localhost:8000
 
 ### The key in a browser page
 
-Anything a browser page holds, a visitor can read, so a key shipped in a page is a key given
-away. The fix is not to hide it but to restrict it. In the Google Cloud console:
+You can read the key in the published page. So can anyone. Hiding it isn't possible, so it's
+restricted instead. In the Google Cloud console:
 
 - **Application restrictions**, Websites, add the one site allowed to use it.
 - **API restrictions**, Restrict key, YouTube Data API v3 only.
 
-A copied key then does nothing from anywhere else, which is why a restricted key can sit in a
-public page.
+That stops a browser on another site from using it. It does not stop anyone with curl: send the
+right `Referer` header by hand and the key works. I tested that too, and it returns data.
 
-It is a limit, not a lock. Referrers can be forged, so the honest ceiling is that a determined
-person could spend the free daily quota. For anything with a bill attached, the key belongs on a
-server the browser never sees.
+So referrer restriction is a speed bump, not a lock. The real ceiling is that someone determined
+could spend the free daily quota, and nothing worse, because the key can only reach the YouTube
+Data API. Put a bill on the other end and the key belongs on a server the browser never sees.
 
 ## Limits worth knowing
 
-- **One page of results.** `youtube.py` follows `pageToken` but is called with `pages=1`, so it
-  takes the most recent 30. Deeper history means more pages and more quota.
+- **One page of results.** `youtube.py` has a `pageToken` loop but every caller passes
+  `pages=1`, so that branch never actually runs. It takes the most recent 30. Deeper history
+  means wiring the loop up and spending more quota.
 - **Public data only.** No audience demographics, no location, no age split. That needs the
   creator's permission or a paid provider.
 - **Instagram and TikTok are not here.** Both need app review and a business account, which is
